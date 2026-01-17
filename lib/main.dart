@@ -1,6 +1,3 @@
-import 'data/database/db.dart';
-import 'services/clipboard_service.dart';
-
 import 'package:flutter/material.dart';
 
 import 'ui/history/history_page.dart';

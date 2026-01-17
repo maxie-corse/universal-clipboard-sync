@@ -27,6 +27,7 @@ Thumbs.db
 
 
 # Miscellaneous
+*.db
 *.class
 *.log
 *.pyc

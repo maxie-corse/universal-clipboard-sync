@@ -8,6 +8,72 @@ import 'tables.dart';
 class AppDatabase {
   static Database? _db;
 
+  static Future<List<Map<String, dynamic>>> getRecentEventsByHash(
+    String contentHash, {
+    required int since,
+  }) async {
+    final db = await instance;
+
+    final result = db.select(
+      '''
+    SELECT content_hash, timestamp
+    FROM clipboard_events
+    WHERE content_hash = ?
+      AND timestamp >= ?
+  ''',
+      [contentHash, since],
+    );
+
+    return result
+        .map(
+          (row) => {
+            'content_hash': row['content_hash'],
+            'timestamp': row['timestamp'],
+          },
+        )
+        .toList();
+  }
+
+  static Future<List<String>> getAllEventIds() async {
+    final db = await instance;
+
+    final result = db.select('''
+      SELECT event_id
+      FROM clipboard_events
+    ''');
+
+    return result.map((row) => row['event_id'] as String).toList();
+  }
+
+  static Future<Map<String, dynamic>?> getClipboardEventById(
+    String eventId,
+  ) async {
+    final db = await instance;
+
+    final result = db.select(
+      '''
+      SELECT *
+      FROM clipboard_events
+      WHERE event_id = ?
+      LIMIT 1
+    ''',
+      [eventId],
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+
+    return {
+      'event_id': row['event_id'],
+      'device_id': row['device_id'],
+      'timestamp': row['timestamp'],
+      'content_hash': row['content_hash'],
+      'content': row['content'],
+      'type': row['type'],
+    };
+  }
+
   static Future<Database> get instance async {
     if (_db != null) return _db!;
     _db = await _init();

@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/database/db.dart';
+import 'dedup_service.dart';
 
 class ClipboardService {
   static Timer? _timer;
@@ -29,10 +30,9 @@ class ClipboardService {
 
   static Future<void> _checkClipboard() async {
     try {
-      final String? content =
-          await FlutterClipboard.paste();
+      final content = await FlutterClipboard.paste();
 
-      if (content == null || content.isEmpty) return;
+      if (content.isEmpty) return;
 
       // If same as last, ignore
       if (content == _lastContent) return;
@@ -40,34 +40,50 @@ class ClipboardService {
       _lastContent = content;
 
       await _saveClipboardEvent(content);
-    } catch (e) {
-      // Ignore clipboard errors silently for now
+    } catch (_) {
+      // Ignore clipboard errors silently
     }
   }
 
   static Future<void> _saveClipboardEvent(String content) async {
-    final String eventId = const Uuid().v4();
+    // 1️⃣ Timestamp
     final int timestamp = DateTime.now().millisecondsSinceEpoch;
 
-    // SHA-256 hash
+    // 2️⃣ Hash content
     final String contentHash =
         sha256.convert(utf8.encode(content)).toString();
 
+    // 3️⃣ Dedup check
+    final bool isDup = await DedupService.isDuplicate(
+      contentHash: contentHash,
+      timestamp: timestamp,
+    );
+
+    if (isDup) {
+      return;
+    }
+
+    // 4️⃣ Event ID
+    final String eventId = const Uuid().v4();
+
+    // 5️⃣ Insert into DB
     await AppDatabase.insertClipboardEvent(
       eventId: eventId,
-      deviceId: 'local', // placeholder for now
+      deviceId: 'local',
       timestamp: timestamp,
       contentHash: contentHash,
       content: content,
       type: 'text',
     );
 
+    // Dev-only log
+    // ignore: avoid_print
     print('Clipboard event saved');
   }
 }
 
-/// lutter does NOT give real OS clipboard “events”
+/// flutter does NOT give real OS clipboard “events”
 /// So we do this instead:
 /// Poll clipboard every 500–1000 ms
 /// Compare with last value
-/// If changed → treat as new event 
+/// If changed → treat as new event
