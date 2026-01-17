@@ -53,6 +53,14 @@ class ClipboardService {
     final String contentHash =
         sha256.convert(utf8.encode(content)).toString();
 
+    // Max file size
+    final maxSizeStr = await AppDatabase.getSetting('max_clipboard_size');
+    final maxSize = int.tryParse(maxSizeStr ?? '0') ?? 0;
+
+    if (maxSize > 0 && content.length > maxSize) {
+      return; // block before insert
+    }
+
     // 3️⃣ Dedup check
     final bool isDup = await DedupService.isDuplicate(
       contentHash: contentHash,

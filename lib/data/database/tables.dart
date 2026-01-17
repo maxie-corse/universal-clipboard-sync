@@ -28,4 +28,11 @@ class Tables {
       PRIMARY KEY (event_id, target_device_id)
     );
   ''';
+
+  static const settings = ''' 
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+  ''';
 }

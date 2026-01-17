@@ -196,4 +196,83 @@ class AppDatabase {
 
     return result.map((row) => row).toList();
   }
+
+  /* ===============================
+     DB HELPERS
+     =============================== */
+
+  /// Get all devices
+  static Future<List<Map<String, dynamic>>> getAllDevices() async {
+    final db = await instance;
+
+    final result = db.select('''
+    SELECT *
+    FROM devices
+    ORDER BY last_seen DESC
+  ''');
+
+    return result
+        .map(
+          (row) => {
+            'device_id': row['device_id'],
+            'name': row['name'],
+            'last_seen': row['last_seen'],
+            'is_online': row['is_online'],
+          },
+        )
+        .toList();
+  }
+
+  /// Upsert device on heartbeat
+  static Future<void> upsertDevice({
+    required String deviceId,
+    required String name,
+    required int lastSeen,
+    required bool isOnline,
+  }) async {
+    final db = await instance;
+
+    db.execute(
+      '''
+    INSERT INTO devices (device_id, name, last_seen, is_online)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(device_id) DO UPDATE SET
+      name = excluded.name,
+      last_seen = excluded.last_seen,
+      is_online = excluded.is_online
+  ''',
+      [deviceId, name, lastSeen, isOnline ? 1 : 0],
+    );
+  }
+
+  static Future<void> deleteDevice(String deviceId) async {
+    final db = await instance;
+
+    db.execute('DELETE FROM devices WHERE device_id = ?', [deviceId]);
+    db.execute('DELETE FROM sync_state WHERE target_device_id = ?', [deviceId]);
+  }
+
+  /// set Setting
+  static Future<void> setSetting(String key, String value) async {
+    final db = await instance;
+    db.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [
+      key,
+      value,
+    ]);
+  }
+
+  /// get Setting
+  static Future<String?> getSetting(String key) async {
+    final db = await instance;
+    final result = db.select('SELECT value FROM settings WHERE key = ?', [key]);
+    if (result.isEmpty) return null;
+    return result.first['value'] as String;
+  }
+
+  /// clear History
+  static Future<void> clearHistory() async {
+    final db = await instance;
+    db.execute('DELETE FROM clipboard_events');
+    db.execute('DELETE FROM sync_state');
+  }
 }

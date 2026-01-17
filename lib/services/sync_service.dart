@@ -6,17 +6,21 @@ class SyncService {
   final WebRTCConnection connection;
   final String localDeviceId;
 
-  SyncService({
-    required this.connection,
-    required this.localDeviceId,
-  });
+  SyncService({required this.connection, required this.localDeviceId});
 
   /// Call this AFTER WebRTC DataChannel is open
-  void start() {
+  Future<void> start() async {
     connection.onMessage = handleMessage;
 
     // Send HELLO immediately on connection
     _sendHello();
+
+    final enabled =
+      await AppDatabase.getSetting('sync_enabled') ?? 'true';
+
+    if (enabled != 'true') {
+      return; // sync disabled
+    }
   }
 
   /* ===============================
@@ -62,16 +66,22 @@ class SyncService {
   }
 
   void _handleHello(ProtocolMessage message) async {
-    // On HELLO, send our event ID list
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    await AppDatabase.upsertDevice(
+      deviceId: message.from,
+      name: message.payload['deviceName'] ?? 'Unknown',
+      lastSeen: now,
+      isOnline: true,
+    );
+
     final eventIds = await AppDatabase.getAllEventIds();
 
     connection.sendMessage(
       ProtocolMessage(
         from: localDeviceId,
         type: MessageType.eventList,
-        payload: {
-          'eventIds': eventIds,
-        },
+        payload: {'eventIds': eventIds},
       ),
     );
   }
@@ -96,9 +106,7 @@ class SyncService {
         ProtocolMessage(
           from: localDeviceId,
           type: MessageType.requestEvent,
-          payload: {
-            'eventId': eventId,
-          },
+          payload: {'eventId': eventId},
         ),
       );
     }
@@ -143,9 +151,7 @@ class SyncService {
       ProtocolMessage(
         from: localDeviceId,
         type: MessageType.ack,
-        payload: {
-          'eventId': data['event_id'],
-        },
+        payload: {'eventId': data['event_id']},
       ),
     );
   }
@@ -158,9 +164,6 @@ class SyncService {
     final String eventId = message.payload['eventId'];
     final String target = message.from;
 
-    await AppDatabase.markEventSynced(
-      eventId: eventId,
-      targetDeviceId: target,
-    );
+    await AppDatabase.markEventSynced(eventId: eventId, targetDeviceId: target);
   }
 }

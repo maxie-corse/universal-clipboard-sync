@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'ui/history/history_page.dart';
+import 'ui/home/home_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +19,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const HistoryPage(),
+      home: const HomePage(),
     );
   }
 }
