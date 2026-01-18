@@ -1,19 +1,3 @@
-# universal_clipboard_sync
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutor
-
 # Universal Clipboard Sync
 
 A cross-platform clipboard synchronization system built with Flutter that enables near real-time sharing of clipboard text across multiple devices, independent of proprietary ecosystems.
