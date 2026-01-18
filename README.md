@@ -8,7 +8,7 @@ This project was built as a hackathon MVP to demonstrate the feasibility of **se
 
 ## Overview
 
-In multi-device workflows, copying content on one device and pasting it on another is often restricted to platform-locked solutions. **Universal Clipboard Sync* aims to solve this by providing:
+In multi-device workflows, copying content on one device and pasting it on another is often restricted to platform-locked solutions. **Universal Clipboard Sync** aims to solve this by providing:
 
 - Cross-platform clipboard monitoring
 
